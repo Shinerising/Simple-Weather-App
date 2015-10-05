@@ -12,6 +12,8 @@ import android.os.Handler;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.util.Pair;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v7.widget.LinearLayoutManager;
@@ -34,7 +36,7 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
 
     private RecyclerView mRecyclerView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
-    private RecyclerView.Adapter mAdapter;
+    private MyAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private static String LOG_TAG = "MainActivity";
 
@@ -56,7 +58,12 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.addItemDecoration(new SpacesItemDecoration(24));
         mAdapter = new MyAdapter(new ArrayList<DataObject>(), this);
+        MyItemTouchHelperCallback mItemTouchHelperCallback = new MyItemTouchHelperCallback(mAdapter);
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(mItemTouchHelperCallback);
+        itemTouchHelper.attachToRecyclerView(mRecyclerView);
+
         mRecyclerView.setAdapter(mAdapter);
 
         if(android.os.Build.VERSION.SDK_INT > 20) {
@@ -82,7 +89,7 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
 
         DataObject dataObject = readData(dataCount);
         if(dataObject != null) {
-            ((MyAdapter) mAdapter).addItem(dataObject, dataCount);
+            mAdapter.addItem(dataObject, dataCount);
             dataCount++;
             if(dataCount < 5) runningHandler.postDelayed(showcards, 300);
         }
@@ -220,7 +227,7 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
     @Override
     protected void onResume() {
         super.onResume();
-        ((MyAdapter) mAdapter).setOnItemClickListener(new MyAdapter
+        mAdapter.setOnItemClickListener(new MyAdapter
                 .MyClickListener() {
             @Override
             public void onItemClick(int position, View v) {
@@ -237,9 +244,9 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
                     DataObject dat = new DataObject(data);
                     Log.i(LOG_TAG, dat.getWeather());
                     if(id > mAdapter.getItemCount())
-                        ((MyAdapter) mAdapter).addItem(new DataObject(data), mAdapter.getItemCount());
+                        mAdapter.addItem(new DataObject(data), mAdapter.getItemCount());
                     else
-                        ((MyAdapter) mAdapter).updateItem(new DataObject(data), id);
+                        mAdapter.updateItem(new DataObject(data), id);
                     writeData(id, data);
                 }
                 mSwipeRefreshLayout.setRefreshing(false);

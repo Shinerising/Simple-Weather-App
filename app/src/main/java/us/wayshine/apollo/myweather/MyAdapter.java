@@ -14,6 +14,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+
 
 public class MyAdapter extends RecyclerView
         .Adapter<MyAdapter
@@ -80,28 +82,42 @@ public class MyAdapter extends RecyclerView
         MyAnimator.deflateFadeIn(holder.card, 0);
     }
 
-    public void addItem(DataObject dataObj, int index) {
-        mDataset.add(index, dataObj);
-        notifyItemInserted(index);
+    public void addItem(DataObject dataObj, int position) {
+        mDataset.add(position, dataObj);
+        notifyItemInserted(position);
     }
 
-    public void updateItem(DataObject dataObj, int index) {
-        mDataset.set(index, dataObj);
-        notifyItemChanged(index);
+    public void updateItem(DataObject dataObj, int position) {
+        mDataset.set(position, dataObj);
+        notifyItemChanged(position);
     }
 
-    public void deleteItem(int index) {
-        mDataset.remove(index);
-        notifyItemRemoved(index);
+    public void deleteItem(int position) {
+        mDataset.remove(position);
+        notifyItemRemoved(position);
     }
 
-    public DataObject getDataObject(int index) {
-        return mDataset.get(index);
+    public DataObject getDataObject(int position) {
+        return mDataset.get(position);
     }
 
     @Override
     public int getItemCount() {
         return mDataset.size();
+    }
+
+    public boolean moveItem(int fromPosition, int toPosition) {
+        if (fromPosition < toPosition) {
+            for (int i = fromPosition; i < toPosition; i++) {
+                Collections.swap(mDataset, i, i + 1);
+            }
+        } else {
+            for (int i = fromPosition; i > toPosition; i--) {
+                Collections.swap(mDataset, i, i - 1);
+            }
+        }
+        notifyItemMoved(fromPosition, toPosition);
+        return true;
     }
 
     public interface MyClickListener {
