@@ -4,6 +4,7 @@
     <color name="green">#009900</color>
     <color name="blue">#0000FF</color>
     <color name="red">#ff0000</color>
+    <color name="black">#000000</color>
     <color name="primary">#2196F3</color>
     <color name="primary_dark">#1976D2</color>
     <color name="primary_light">#BBDEFB</color>
@@ -15,6 +16,6 @@
     <color name="divider">#B6B6B6</color>
     <color name="background">#F8F8F8</color>
     <color name="navigation">#121212</color>
-    <color name="transwhite">#44FFFFFF</color>
-    <color name="transblack">#44222222</color>
+    <color name="transwhite">#DDFFFFFF</color>
+    <color name="transblack">#22222222</color>
 </resources>
