@@ -2,6 +2,7 @@ package us.wayshine.apollo.myweather;
 
 import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -34,7 +35,17 @@ public class DetailActivity extends Activity {
         setContentView(R.layout.activity_detail);
         detailData = new DataObject(getIntent().getStringExtra(EXTRA_DETAIL));
 
-        ((ImageView)findViewById(R.id.card_cover)).setImageResource(detailData.getCover());
+        jsonInfo = new JSONreceiver(this);
+
+        if(DownloadImageTask.imageExists(detailData.getCity()))
+            new DownloadImageTask(((ImageView)findViewById(R.id.card_cover)), detailData.getCity())
+                    .loadFromLocal();
+        else if(!detailData.getCoverImageUri().equals(""))
+            new DownloadImageTask((ImageView)findViewById(R.id.card_cover), detailData.getCity())
+                    .execute(detailData.getCoverImageUri());
+        else
+            requestCoverImage(detailData.getCity(), 0);
+
         ((TextView)findViewById(R.id.card_city)).setText(detailData.getCity());
         ((TextView)findViewById(R.id.card_temper)).setText(detailData.getTemp());
         ((TextView)findViewById(R.id.card_weather)).setText(detailData.getWeather());
@@ -79,8 +90,7 @@ public class DetailActivity extends Activity {
         View arrowImage = findViewById(R.id.arrow);
         arrowImage.setRotation(detailData.getWindDeg());
 
-        jsonInfo = new JSONreceiver(this);
-        jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/forecast/daily?id=" + detailData.getCityID(), 0);
+        jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/forecast/daily?id=" + detailData.getCityID() + "&APPID=" + MainActivity.APPID, "", 0, 0);
 
         try {
             jsonInfo.startNewRequest();
@@ -88,6 +98,44 @@ public class DetailActivity extends Activity {
         catch(Exception e){
             Log.e("Fetch Data Error!", e.toString());
         }
+
+
+        jsonInfo.setJSONreceiveListener(new JSONreceiver.JSONreceiveListener() {
+            @Override
+            public void onJSONreceive(int id, int type, String data, String option, boolean succeed) {
+                if(succeed) {
+                    if (type == MainActivity.TYPE_IMAGE) {
+
+                        PhotoObject dat = new PhotoObject(data);
+                        String url = dat.getURL();
+                        try {
+                            new DownloadImageTask(((ImageView) findViewById(R.id.card_cover)), option)
+                                    .execute(url);
+                            MyAnimator.fadeIn(findViewById(R.id.search_cover), 0);
+                        } catch (Exception e) {
+                            Log.e("", e.toString());
+                        }
+                    }
+                    else {
+                        forecastData = new ForecastDataObject(data);
+                        ((TextView) findViewById(R.id.fc01)).setText(forecastData.getTempBoth(0));
+                        ((TextView) findViewById(R.id.fc02)).setText(forecastData.getTempBoth(1));
+                        ((TextView) findViewById(R.id.fc03)).setText(forecastData.getTempBoth(2));
+                        ((TextView) findViewById(R.id.fc04)).setText(forecastData.getTempBoth(3));
+                        ((TextView) findViewById(R.id.fc05)).setText(forecastData.getTempBoth(4));
+
+                        ((TextView) findViewById(R.id.fci01)).setText(DataObject.getImage(forecastData.getWeatherID(0)));
+                        ((TextView) findViewById(R.id.fci02)).setText(DataObject.getImage(forecastData.getWeatherID(1)));
+                        ((TextView) findViewById(R.id.fci03)).setText(DataObject.getImage(forecastData.getWeatherID(2)));
+                        ((TextView) findViewById(R.id.fci04)).setText(DataObject.getImage(forecastData.getWeatherID(3)));
+                        ((TextView) findViewById(R.id.fci05)).setText(DataObject.getImage(forecastData.getWeatherID(4)));
+
+                        MyAnimator.expandFadeIn(findViewById(R.id.card_forecast), 0);
+                        MyAnimator.expandFadeIn(findViewById(R.id.card_forecasttext), 300);
+                    }
+                }
+            }
+        });
     }
 
     private void startTextAnimation() {
@@ -112,31 +160,14 @@ public class DetailActivity extends Activity {
         valueAnimator.start();
     }
 
+    public void requestCoverImage(String city, int id) {
+        jsonInfo.setNewRequest("https://api.gettyimages.com/v3/search/images?fields=thumb&page=1&page_size=1&phrase="
+                + Uri.encode(city), city, id, MainActivity.TYPE_IMAGE);
+    }
+
+
     @Override
     protected void onResume() {
         super.onResume();
-
-        jsonInfo.setJSONreceiveListener(new JSONreceiver.JSONreceiveListener() {
-            @Override
-            public void onJSONreceive(int id, String data, boolean succeed) {
-            if(succeed) {
-                forecastData = new ForecastDataObject(data);
-                ((TextView)findViewById(R.id.fc01)).setText(forecastData.getTempBoth(0));
-                ((TextView)findViewById(R.id.fc02)).setText(forecastData.getTempBoth(1));
-                ((TextView)findViewById(R.id.fc03)).setText(forecastData.getTempBoth(2));
-                ((TextView)findViewById(R.id.fc04)).setText(forecastData.getTempBoth(3));
-                ((TextView)findViewById(R.id.fc05)).setText(forecastData.getTempBoth(4));
-
-                ((TextView)findViewById(R.id.fci01)).setText(DataObject.getImage(forecastData.getWeatherID(0)));
-                ((TextView)findViewById(R.id.fci02)).setText(DataObject.getImage(forecastData.getWeatherID(1)));
-                ((TextView)findViewById(R.id.fci03)).setText(DataObject.getImage(forecastData.getWeatherID(2)));
-                ((TextView)findViewById(R.id.fci04)).setText(DataObject.getImage(forecastData.getWeatherID(3)));
-                ((TextView)findViewById(R.id.fci05)).setText(DataObject.getImage(forecastData.getWeatherID(4)));
-
-                MyAnimator.expandFadeIn(findViewById(R.id.card_forecast), 0);
-                MyAnimator.expandFadeIn(findViewById(R.id.card_forecasttext), 300);
-            }
-            }
-        });
     }
 }

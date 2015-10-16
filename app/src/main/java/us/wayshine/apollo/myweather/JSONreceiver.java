@@ -3,15 +3,21 @@ package us.wayshine.apollo.myweather;
 import android.content.Context;
 import android.util.Log;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.JsonRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
-import java.io.Serializable;
-import java.util.ArrayList;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -30,25 +36,38 @@ public class JSONreceiver {
         queue = Volley.newRequestQueue(mContext);
     }
 
-    public void setNewRequest(String url, int i) {
+    public void setNewRequest(String url, String p, int i, int t) {
 
         final int id = i;
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                listener.onJSONreceive(id, response, true);
-            }
-        }, new Response.ErrorListener(){
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.v("response", "error!");
-                listener.onJSONreceive(id, error.toString(), false);
-            }
-        });
+        final int type = t;
+        final String option = p;
 
-        queue.add(stringRequest);
+        StringRequest request = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        listener.onJSONreceive(id, type, response, option, true);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("response error", error.toString());
+                        listener.onJSONreceive(id, type, error.toString(), option, false);
+                    }
+                }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> map = new HashMap<String, String>();
+                if(type == MainActivity.TYPE_IMAGE) {
+                    map.put("Api-Key", mContext.getString(R.string.gettyimages_api_key));
+                }
+                return map;
+            }
+        };
+
+        queue.add(request);
     }
-
 
     public void startNewRequest() {
         queue.start();
@@ -60,7 +79,7 @@ public class JSONreceiver {
 
     public interface JSONreceiveListener
     {
-        void onJSONreceive(int id, String data, boolean succeed);
+        void onJSONreceive(int id, int type, String data, String option, boolean succeed);
     }
 
 }

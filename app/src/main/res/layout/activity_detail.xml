@@ -44,7 +44,7 @@
                     android:contentDescription="Test"
                     android:transitionName="cover"
                     android:scaleType="centerCrop"
-                    android:foreground="@color/transblack">
+                    android:foreground="@color/primary_light">
                 </ImageView>
 
                 <us.wayshine.apollo.myweather.WeatherTextView
@@ -252,7 +252,8 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
-                android:layout_marginStart="10dp">
+                android:layout_marginStart="10dp"
+                android:gravity="center_horizontal">
 
                 <us.wayshine.apollo.myweather.WeatherTextView
                     android:layout_width="wrap_content"
@@ -299,7 +300,8 @@
                 android:orientation="horizontal"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="4">
+                android:layout_weight="4"
+                android:gravity="center_horizontal">
 
             <us.wayshine.apollo.myweather.IconTextView
                 android:layout_width="wrap_content"

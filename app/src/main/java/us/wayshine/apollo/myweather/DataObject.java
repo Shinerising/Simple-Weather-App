@@ -27,7 +27,7 @@ public class DataObject {
     private Integer wind_speed = 0, wind_deg = 0;
     private Integer sunrise, sunset, cTime;
     private Integer dayornight = 0;     //1:day -1:night 0 :default
-    private Integer cover = R.drawable.beijing;
+    private String coverImageUri = "";
     private Locale locale;
 
     public DataObject(String weatherData) {
@@ -88,17 +88,9 @@ public class DataObject {
             }
             else
                 lat = Math.abs(Math.round(Float.parseFloat(lat))) + "N";
-
-            switch(city) {
-                case "Beijing": cover = R.drawable.beijing; break;
-                case "Tokyo": cover = R.drawable.tokyo; break;
-                case "London": cover = R.drawable.london; break;
-                case "New York": cover = R.drawable.newyork; break;
-                case "Brussels": cover = R.drawable.brussels; break;
-            }
         }
         catch(Exception e) {
-            Log.e("JSON Parser", "Error parsing data " + e.toString());
+            Log.e("JSON Parser", "Error parsing data " + weatherData);
         }
     }
 
@@ -111,8 +103,6 @@ public class DataObject {
     public String getCity() {return city;}
 
     public Integer getCityID() {return cityID;}
-
-    public int getCover() {return cover;}
 
     public String getTemp() {return Integer.toString(Math.round(temp - 273.15f)) + "°";}
 
@@ -170,6 +160,14 @@ public class DataObject {
     public String getSunset() {
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm", Locale.getDefault());
         return formatter.format(1000l * sunset);
+    }
+
+    public void setCoverImageUri(String Uri) {
+        coverImageUri = Uri;
+    }
+
+    public String getCoverImageUri() {
+        return coverImageUri;
     }
 
     public static Integer getImage(int weatherID) {

@@ -3,7 +3,9 @@ package us.wayshine.apollo.myweather;
 /**
  * Created by Apollo on 9/26/15.
  */
+import android.app.Activity;
 import android.content.Context;
+import android.net.Uri;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -78,13 +80,26 @@ public class MyAdapter extends RecyclerView
         holder.label_temp.setText(mDataset.get(position).getTemp());
         holder.label_weather.setText(mDataset.get(position).getWeather());
         holder.image_weather.setText(mDataset.get(position).getAlterImage());
-        holder.image_cover.setImageResource(mDataset.get(position).getCover());
+        if(DownloadImageTask.imageExists(mDataset.get(position).getCity()))
+            new DownloadImageTask(holder.image_cover, mDataset.get(position).getCity())
+                    .loadFromLocal();
+        else if(!(mDataset.get(position).getCoverImageUri()).equals(""))
+            new DownloadImageTask(holder.image_cover, mDataset.get(position).getCity())
+                    .execute(mDataset.get(position).getCoverImageUri());
+        else
+            ((MainActivity)mContext).requestCoverImage(mDataset.get(position).getCity(), position);
+
         MyAnimator.deflateFadeIn(holder.card, 0);
     }
 
     public void addItem(DataObject dataObj, int position) {
         mDataset.add(position, dataObj);
         notifyItemInserted(position);
+    }
+
+    public void refreshItemCover(int position, String url) {
+        mDataset.get(position).setCoverImageUri(url);
+        notifyItemChanged(position);
     }
 
     public void updateItem(DataObject dataObj, int position) {

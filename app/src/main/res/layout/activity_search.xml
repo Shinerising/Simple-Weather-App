@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/weather_cards"
+    android:padding="0dp"
+    android:background="@color/transwhite">
+
+    <android.support.v7.widget.CardView
+        android:id="@+id/card"
+        android:layout_width="fill_parent"
+        android:layout_height="150dp"
+        android:layout_marginBottom="@dimen/activity_vertical_margin"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:foreground="?android:attr/selectableItemBackground"
+        android:background="@color/primary_light"
+        android:stateListAnimator="@anim/lift_up"
+        card_view:cardCornerRadius="2dp"
+        card_view:cardPreventCornerOverlap="false"
+        card_view:cardUseCompatPadding="true"
+        android:padding="0dp"
+        android:transitionName="card">
+
+        <ImageView
+            android:id="@+id/card_cover"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:background="@color/primary_light"
+            android:contentDescription="Test"
+            android:transitionName="cover"
+            android:scaleType="centerCrop"
+            android:foreground="@color/transblack">
+        </ImageView>
+
+        <LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start|center"
+            android:layout_marginLeft="20dp"
+            android:id="@+id/card_info"
+            android:transitionName="info">
+            <us.wayshine.apollo.myweather.MyTextView
+                android:id="@+id/card_city"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:text="Beijing"
+                android:textSize="32sp"
+                android:layout_margin="2dp"
+                android:textColor="@color/primary_text"
+                android:transitionName="city">
+            </us.wayshine.apollo.myweather.MyTextView>
+            <LinearLayout
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <us.wayshine.apollo.myweather.MyTextView
+                    android:id="@+id/card_temper"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:text="25.3°"
+                    android:textSize="24sp"
+                    android:layout_margin="2dp"
+                    android:textColor="@color/primary_text"
+                    android:transitionName="temp">
+                </us.wayshine.apollo.myweather.MyTextView>
+                <us.wayshine.apollo.myweather.MyTextView
+                    android:id="@+id/card_weather"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:text="Sky is Clear"
+                    android:textSize="24sp"
+                    android:layout_margin="2dp"
+                    android:textColor="@color/primary_text"
+                    android:transitionName="weather">
+                </us.wayshine.apollo.myweather.MyTextView>
+            </LinearLayout>
+        </LinearLayout>
+
+        <us.wayshine.apollo.myweather.WeatherTextView
+            android:id="@+id/card_image"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center"
+            android:gravity="center"
+            android:text="@string/wi_day_sunny"
+            android:textSize="60sp"
+            android:textColor="@color/primary_text"
+            android:transitionName="image">
+        </us.wayshine.apollo.myweather.WeatherTextView>
+
+    </android.support.v7.widget.CardView>
+</LinearLayout>
