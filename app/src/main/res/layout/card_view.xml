@@ -29,10 +29,9 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_gravity="center"
-            android:background="#EEEEEE"
+            android:background="@color/primary_light"
             android:contentDescription="Test"
             android:transitionName="cover"
-            android:src="@drawable/beijing"
             android:scaleType="centerCrop"
             android:foreground="@color/transblack">
         </ImageView>
