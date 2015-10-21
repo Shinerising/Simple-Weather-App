@@ -50,8 +50,7 @@ public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
 
     private void saveToLocal(Bitmap bmp) {
         OutputStream outStream;
-        File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
-                + "/Android/data/us.wayshine.apollo.myweather/images");
+        File dir = new File(path);
 
         if(!dir.exists()) {
             Log.i("dirExists", path + dir.mkdirs());

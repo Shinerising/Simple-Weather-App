@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -16,6 +17,7 @@ import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.util.Pair;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,11 +26,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.SearchView;
+import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 
-public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefreshListener {
+public class MainActivity extends Activity
+        implements SwipeRefreshLayout.OnRefreshListener {
 
     public static final String PREFS_NAME = "SimpleWeatherData";
     public static final int TYPE_INFO = 0;
@@ -39,11 +43,12 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
     private DataObject searchData;
     private String searchWord = "";
 
+    private MyDatabaseHelper mDatabaseHelper;
     private RecyclerView mRecyclerView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private MyAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
-    private SearchView searchView;
+    private SearchView mSearchView;
     private MenuItem mSearch;
     private static String LOG_TAG = "MainActivity";
 
@@ -53,6 +58,8 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mDatabaseHelper = new MyDatabaseHelper(this);
 
         mRecyclerView = (RecyclerView)findViewById(R.id.weather_cards);
         mRecyclerView.setHasFixedSize(true);
@@ -82,45 +89,51 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
 
         jsonInfo = new JSONreceiver(this);
 
-        //ActionBar actionBar = getActionBar();
-        //actionBar.setLogo(R.drawable.weather_nobackground);
-        //actionBar.setHomeButtonEnabled(true);
-        //actionBar.setDisplayUseLogoEnabled(true);
-        //actionBar.setDisplayShowHomeEnabled(true);
+        ActionBar actionBar = getActionBar();
+        actionBar.setHomeButtonEnabled(false);
+        actionBar.setDisplayUseLogoEnabled(true);
+        actionBar.setDisplayShowHomeEnabled(true);
+
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(false);
+
+        LayoutInflater inflator = LayoutInflater.from(this);
+        View v = inflator.inflate(R.layout.actionbar_custom, null);
+
+        actionBar.setCustomView(v);
 
         jsonInfo.setJSONreceiveListener(new JSONreceiver.JSONreceiveListener() {
             @Override
             public void onJSONreceive(int id, int type, String data, String option, boolean succeed) {
-            if (succeed) {
-                if (id == ID_SEARCH && type == TYPE_INFO && !data.equals("{\"cod\":\"404\",\"message\":\"Error: Not found city\"}")) {
-                    updateSearchCard(data);
-                } else if (id == ID_SEARCH && type == TYPE_IMAGE) {
-
-                    PhotoObject dat = new PhotoObject(data);
-                    String url = dat.getURL();
-                    try {
-                        new DownloadImageTask(((ImageView) findViewById(R.id.search_cover)), option)
-                                .execute(url);
-                        MyAnimator.fadeIn(findViewById(R.id.search_cover), 0);
-                    } catch (Exception e) {
-                        Log.e("", e.toString());
+                if (succeed) {
+                    if (id == ID_SEARCH && type == TYPE_INFO && !data.equals("{\"cod\":\"404\",\"message\":\"Error: Not found city\"}")) {
+                        updateSearchCard(data);
+                    } else if (id == ID_SEARCH && type == TYPE_IMAGE) {
+                        try {
+                            PhotoObject dat = new PhotoObject(data);
+                            String url = dat.getURL();
+                            if(!url.equals(""))new DownloadImageTask(((ImageView) findViewById(R.id.search_cover)), option)
+                                    .execute(url);
+                            MyAnimator.fadeIn(findViewById(R.id.search_cover), 0);
+                        } catch (Exception e) {
+                            Log.e("", e.toString());
+                        }
+                    } else if (type == TYPE_IMAGE) {
+                        PhotoObject dat = new PhotoObject(data);
+                        String url = dat.getURL();
+                        mAdapter.refreshItemCover(id, url);
+                    } else {
+                        DataObject dat = new DataObject(data);
+                        Log.i(LOG_TAG, dat.getWeather());
+                        if (id > mAdapter.getItemCount())
+                            mAdapter.addItem(new DataObject(data), mAdapter.getItemCount());
+                        else
+                            mAdapter.updateItem(new DataObject(data), id);
+                        writeData(id, data);
                     }
-                } else if (type == TYPE_IMAGE) {
-                    PhotoObject dat = new PhotoObject(data);
-                    String url = dat.getURL();
-                    mAdapter.refreshItemCover(id, url);
-                } else {
-                    DataObject dat = new DataObject(data);
-                    Log.i(LOG_TAG, dat.getWeather());
-                    if (id > mAdapter.getItemCount())
-                        mAdapter.addItem(new DataObject(data), mAdapter.getItemCount());
-                    else
-                        mAdapter.updateItem(new DataObject(data), id);
-                    writeData(id, data);
                 }
-            }
 
-            mSwipeRefreshLayout.setRefreshing(false);
+                mSwipeRefreshLayout.setRefreshing(false);
             }
         });
 
@@ -130,12 +143,19 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
                 if (searchData != null) {
                     mAdapter.addItem(searchData, 0);
                     dataCount++;
-                    searchView.setIconified(true);
+                    mSearchView.onActionViewCollapsed();
                     mSearch.collapseActionView();
                     mLayoutManager.scrollToPosition(0);
                 }
             }
         });
+
+        try {
+            mDatabaseHelper.createDataBase();
+        }
+        catch(Exception e){
+            Log.e("SQLite Database Error", e.toString());
+        }
 
         showCards();
 
@@ -278,24 +298,81 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(final Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
 
         SearchManager searchManager =
                 (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        searchView =
+        mSearchView =
                 (SearchView) menu.findItem(R.id.search).getActionView();
         mSearch = menu.findItem(R.id.search);
-        searchView.setSearchableInfo(
+        mSearchView.setSearchableInfo(
                 searchManager.getSearchableInfo(getComponentName()));
 
-        searchView.setQueryHint("Enter your city");
-        searchView.setOnQueryTextListener(this.onQueryTextListener);
+        mSearchView.setQueryHint("Enter your city");
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String searchWord) {
+                if (!searchWord.equals("")) {
+                    jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/weather?q="
+                            + Uri.encode(searchWord) + "&APPID=" + getString(R.string.owm_api_key), searchWord, ID_SEARCH, TYPE_INFO);
+                    clearSearchCard();
+                    MyAnimator.fadeIn(findViewById(R.id.card_search), 0);
+                }
+
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (newText.equals("") && !searchWord.equals(""))
+                    MyAnimator.fadeOut(findViewById(R.id.searchBox), 0);
+                else if (!newText.equals("") && searchWord.equals(""))
+                    MyAnimator.fadeIn(findViewById(R.id.searchBox), 0);
+
+                if (!newText.equals("")) {
+                    SimpleCursorAdapter suggestions = new SimpleCursorAdapter(getBaseContext(),
+                            android.R.layout.simple_list_item_1, mDatabaseHelper.getCityListCursor(newText),
+                            new String[]{"city"},
+                            new int[]{android.R.id.text1}, 0);
+                    mSearchView.setSuggestionsAdapter(suggestions);
+                }
+
+                findViewById(R.id.card_search).setVisibility(View.INVISIBLE);
+                searchWord = newText;
+                return true;
+            }
+        });
+        mSearchView.setOnSuggestionListener(new SearchView.OnSuggestionListener() {
+            @Override
+            public boolean onSuggestionClick(int position) {
+
+                Cursor cursor = (Cursor) mSearchView.getSuggestionsAdapter().getItem(position);
+                int indexColumnSuggestion = cursor.getColumnIndex("city");
+                mSearchView.setQuery(cursor.getString(indexColumnSuggestion), true);
+
+                return true;
+            }
+
+            @Override
+            public boolean onSuggestionSelect(int position) {
+                return false;
+            }
+        });
+        mSearchView.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                findViewById(R.id.card_search).setVisibility(View.GONE);
+                findViewById(R.id.searchBox).setVisibility(View.GONE);
+                return true;
+            }
+        });
 
         mSearch.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
 
             @Override
             public boolean onMenuItemActionCollapse(MenuItem item) {
+                findViewById(R.id.card_search).setVisibility(View.GONE);
                 findViewById(R.id.searchBox).setVisibility(View.GONE);
                 return true;
             }
@@ -306,35 +383,20 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
                 return true;
             }
         });
-
-
+        int searchCloseButtonId = mSearchView.getContext().getResources()
+                .getIdentifier("android:id/search_close_btn", null, null);
+        ImageView closeButton = (ImageView)mSearchView.findViewById(searchCloseButtonId);
+        closeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(searchWord.equals(""))
+                    mSearchView.onActionViewCollapsed();
+                else
+                    mSearchView.setQuery("", false);
+            }
+        });
         return true;
     }
-
-
-    private SearchView.OnQueryTextListener onQueryTextListener = new SearchView.OnQueryTextListener() {
-        @Override
-        public boolean onQueryTextSubmit(String searchWord) {
-            if(!searchWord.equals("")) {
-                jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/weather?q="
-                        + Uri.encode(searchWord) + "&APPID=" + getString(R.string.owm_api_key), searchWord, ID_SEARCH, TYPE_INFO);
-                clearSearchCard();
-            }
-
-            return false;
-        }
-
-        @Override
-        public boolean onQueryTextChange(String newText) {
-            if(newText.equals("") && !searchWord.equals(""))
-                MyAnimator.fadeOut(findViewById(R.id.searchBox), 0);
-            else if(!newText.equals("") && searchWord.equals(""))
-                MyAnimator.fadeIn(findViewById(R.id.searchBox), 0);
-            searchWord = newText;
-            return true;
-        }
-
-    };
 
     private void updateSearchCard(String data) {
         searchData = new DataObject(data);
@@ -343,6 +405,8 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
         ((TextView)card.findViewById(R.id.card_temper)).setText(searchData.getTemp());
         ((TextView)card.findViewById(R.id.card_weather)).setText(searchData.getWeather());
         ((TextView)card.findViewById(R.id.card_image)).setText(searchData.getAlterImage());
+        card.findViewById(R.id.card_info).setVisibility(View.VISIBLE);
+        card.findViewById(R.id.search_progress).setVisibility(View.INVISIBLE);
         if(!DownloadImageTask.imageExists(searchData.getCity())) requestCoverImage(searchData.getCity(), ID_SEARCH);
         else {
             new DownloadImageTask(((ImageView) findViewById(R.id.search_cover)), searchData.getCity())
@@ -353,9 +417,8 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
 
     private void clearSearchCard() {
         View card = findViewById(R.id.card_search);
-        ((TextView)card.findViewById(R.id.card_city)).setText("---");
-        ((TextView)card.findViewById(R.id.card_temper)).setText("---");
-        ((TextView)card.findViewById(R.id.card_weather)).setText("-----");
+        card.findViewById(R.id.card_info).setVisibility(View.GONE);
+        card.findViewById(R.id.search_progress).setVisibility(View.VISIBLE);
         ((TextView)card.findViewById(R.id.card_image)).setText(getString(R.string.wi_cloud_refresh));
         MyAnimator.fadeOut(findViewById(R.id.search_cover), 0);
     }
@@ -368,14 +431,22 @@ public class MainActivity extends Activity implements SwipeRefreshLayout.OnRefre
     }
 
     @Override
+    public void onBackPressed() {
+        mSearchView.onActionViewCollapsed();
+        super.onBackPressed();
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
+        mDatabaseHelper.close();
         writeAllData();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        mDatabaseHelper.openDataBase();
         mAdapter.setOnItemClickListener(new MyAdapter
                 .MyClickListener() {
             @Override

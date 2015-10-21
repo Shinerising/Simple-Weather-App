@@ -90,7 +90,7 @@ public class DetailActivity extends Activity {
         View arrowImage = findViewById(R.id.arrow);
         arrowImage.setRotation(detailData.getWindDeg());
 
-        jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/forecast/daily?id=" + detailData.getCityID() + "&APPID=" + MainActivity.APPID, "", 0, 0);
+        jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/forecast/daily?id=" + detailData.getCityID() + "&APPID=" + getString(R.string.owm_api_key), "", 0, 0);
 
         try {
             jsonInfo.startNewRequest();

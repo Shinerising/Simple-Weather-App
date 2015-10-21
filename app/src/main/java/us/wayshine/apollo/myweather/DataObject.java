@@ -3,6 +3,7 @@ package us.wayshine.apollo.myweather;
 import android.util.Log;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
@@ -37,7 +38,7 @@ public class DataObject {
                 jObject = new JSONObject(weatherData);
                 parseJSON();
                 existed = true;
-            } catch (Exception e) {
+            } catch (JSONException e) {
                 Log.e("JSON Parser", "Error parsing data " + e.toString());
             }
         }
