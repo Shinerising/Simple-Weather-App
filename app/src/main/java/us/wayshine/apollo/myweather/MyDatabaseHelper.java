@@ -122,8 +122,13 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
     }
 
     public Cursor getCityListCursor(String text) {
-        String query = "SELECT * FROM cities WHERE city LIKE '" + text + "%' ORDER BY city LIMIT 5";
-        return myDataBase.rawQuery(query, null);
+        try {
+            String query = "SELECT * FROM cities WHERE city LIKE '" + text + "%' ORDER BY city LIMIT 5";
+            return myDataBase.rawQuery(query, null);
+        } catch(SQLiteException e){
+            Log.e("SQLite Database", e.toString());
+            return null;
+        }
     }
 
     @Override

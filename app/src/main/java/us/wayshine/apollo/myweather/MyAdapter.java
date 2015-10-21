@@ -139,5 +139,4 @@ public class MyAdapter extends RecyclerView
         void onItemClick(int position, View v);
     }
 
-
 }
