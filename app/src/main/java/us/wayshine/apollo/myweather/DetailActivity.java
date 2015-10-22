@@ -1,12 +1,12 @@
 package us.wayshine.apollo.myweather;
 
 import android.animation.ValueAnimator;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
@@ -33,9 +33,23 @@ public class DetailActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
-        detailData = new DataObject(getIntent().getStringExtra(EXTRA_DETAIL));
+        detailData = getIntent().getExtras().getParcelable(EXTRA_DETAIL);
 
         jsonInfo = new JSONreceiver(this);
+
+        ActionBar actionBar = getActionBar();
+        actionBar.setHomeButtonEnabled(false);
+        actionBar.setDisplayUseLogoEnabled(true);
+        actionBar.setDisplayShowHomeEnabled(true);
+
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(false);
+
+        LayoutInflater inflator = LayoutInflater.from(this);
+        View v = inflator.inflate(R.layout.actionbar_custom, null);
+        ((TextView)v.findViewById(R.id.title)).setText(R.string.title_activity_detail);
+
+        actionBar.setCustomView(v);
 
         if(DownloadImageTask.imageExists(detailData.getCity()))
             new DownloadImageTask(((ImageView)findViewById(R.id.card_cover)), detailData.getCity())
@@ -68,8 +82,6 @@ public class DetailActivity extends Activity {
         findViewById(R.id.card_forecast).setAlpha(0);
         findViewById(R.id.card_forecasttext).setAlpha(0);
 
-        //MyAnimator.fadeIn(findViewById(R.id.card_forecast), 500);
-        //MyAnimator.fadeIn(findViewById(R.id.card_forecasttext), 700);
         MyAnimator.fadeIn(findViewById(R.id.card_detail01), 900);
         MyAnimator.fadeIn(findViewById(R.id.card_detail02), 1100);
 

@@ -193,7 +193,7 @@ public class MainActivity extends Activity
     private void showDetail(View v, int id) {
         Intent intent = new Intent(this, DetailActivity.class);
 
-        intent.putExtra(DetailActivity.EXTRA_DETAIL, mAdapter.getDataObject(id).getJSONString());
+        intent.putExtra(DetailActivity.EXTRA_DETAIL, mAdapter.getDataObject(id));
 
         Pair<View, String> p1 = Pair.create(v.findViewById(R.id.card_cover), "cover");
         Pair<View, String> p2 = Pair.create(v.findViewById(R.id.card_image), "image");
