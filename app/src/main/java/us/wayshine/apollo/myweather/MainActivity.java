@@ -28,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -38,6 +39,9 @@ public class MainActivity extends Activity
     public static final int TYPE_INFO = 0;
     public static final int TYPE_IMAGE = 1;
     public static final int ID_SEARCH = -1;
+    public static final int TOAST_TIMEOUT = 0;
+    public static final int TOAST_SEARCH_TIMEOUT = 1;
+    public static final int TOAST_SEARCH_NORESULT = 2;
 
     private int dataCount = 0;
     private DataObject searchData;
@@ -106,14 +110,16 @@ public class MainActivity extends Activity
             @Override
             public void onJSONreceive(int id, int type, String data, String option, boolean succeed) {
                 if (succeed) {
-                    if (id == ID_SEARCH && type == TYPE_INFO && !data.equals("{\"cod\":\"404\",\"message\":\"Error: Not found city\"}")) {
+                    Log.i(LOG_TAG, data);
+                    if (id == ID_SEARCH && type == TYPE_INFO) {
                         updateSearchCard(data);
                     } else if (id == ID_SEARCH && type == TYPE_IMAGE) {
                         try {
                             PhotoObject dat = new PhotoObject(data);
                             String url = dat.getURL();
-                            if(!url.equals(""))new DownloadImageTask(((ImageView) findViewById(R.id.search_cover)), option)
-                                    .execute(url);
+                            if (!url.equals(""))
+                                new DownloadImageTask(((ImageView) findViewById(R.id.search_cover)), option)
+                                        .execute(url);
                             MyAnimator.fadeIn(findViewById(R.id.search_cover), 0);
                         } catch (Exception e) {
                             Log.e("", e.toString());
@@ -124,16 +130,27 @@ public class MainActivity extends Activity
                         mAdapter.refreshItemCover(id, url);
                     } else {
                         DataObject dat = new DataObject(data);
-                        Log.i(LOG_TAG, dat.getWeather());
                         if (id > mAdapter.getItemCount())
                             mAdapter.addItem(new DataObject(data), mAdapter.getItemCount());
                         else
                             mAdapter.updateItem(new DataObject(data), id);
                         writeData(id, data);
+
+                        mSwipeRefreshLayout.setRefreshing(false);
+                    }
+                } else {
+                    if (id == ID_SEARCH && type == TYPE_INFO) {
+                        findViewById(R.id.card_search).setVisibility(View.GONE);
+                        if (data.equals("404"))
+                            showToast(TOAST_SEARCH_NORESULT);
+                        else
+                            showToast(TOAST_SEARCH_TIMEOUT);
+                    } else {
+                        showToast(TOAST_TIMEOUT);
+                        mSwipeRefreshLayout.setRefreshing(false);
                     }
                 }
 
-                mSwipeRefreshLayout.setRefreshing(false);
             }
         });
 
@@ -147,6 +164,14 @@ public class MainActivity extends Activity
                     mSearch.collapseActionView();
                     mLayoutManager.scrollToPosition(0);
                 }
+            }
+        });
+
+        mAdapter.setOnItemClickListener(new MyAdapter
+                .MyClickListener() {
+            @Override
+            public void onItemClick(int position, View v) {
+                showDetail(v, position);
             }
         });
 
@@ -171,6 +196,19 @@ public class MainActivity extends Activity
             if(dat != null) {
                 mAdapter.addItem(dat, i);
             }
+        }
+    }
+
+    private void showToast(int type) {
+        switch(type) {
+            case TOAST_SEARCH_NORESULT:
+                Toast.makeText(this, getString(R.string.toast_noresult), Toast.LENGTH_SHORT).show();break;
+            case TOAST_SEARCH_TIMEOUT:
+                Toast.makeText(this, getString(R.string.toast_timeout), Toast.LENGTH_SHORT).show();break;
+            case TOAST_TIMEOUT:
+                Toast.makeText(this, getString(R.string.toast_timeout), Toast.LENGTH_SHORT).show();break;
+            default:
+                Toast.makeText(this, getString(R.string.toast_timeout), Toast.LENGTH_SHORT).show();break;
         }
     }
 
@@ -439,23 +477,23 @@ public class MainActivity extends Activity
     @Override
     protected void onPause() {
         super.onPause();
-        mDatabaseHelper.close();
+        try {
+            mDatabaseHelper.close();
+        }
+        catch(Exception e){
+            Log.e("SQLite Database Error", e.toString());
+        }
         writeAllData();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mDatabaseHelper.openDataBase();
-        mAdapter.setOnItemClickListener(new MyAdapter
-                .MyClickListener() {
-            @Override
-            public void onItemClick(int position, View v) {
-                showDetail(v, position);
-
-                Log.i(LOG_TAG, " Clicked on Item " + position);
-            }
-        });
-
+        try {
+            mDatabaseHelper.openDataBase();
+        }
+        catch(Exception e){
+            Log.e("SQLite Database Error", e.toString());
+        }
     }
 }

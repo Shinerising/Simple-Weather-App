@@ -20,7 +20,7 @@ public class PhotoObject {
                 jObject = new JSONObject(data);
                 parseJSON();
             } catch (Exception e) {
-                Log.e("JSON Parser", "Error parsing data " + e.toString());
+                Log.e("JSON Parser", "Error parsing data " + data);
             }
         }
 
