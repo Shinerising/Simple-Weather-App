@@ -2,9 +2,11 @@ package us.wayshine.apollo.myweather;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 
 import java.io.File;
@@ -17,6 +19,7 @@ import java.io.OutputStream;
  */
 public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
     private ImageView bmImage;
+    private View detailView;
     private String name;
     private String filename;
     private static String path = Environment.getExternalStorageDirectory().getAbsolutePath()
@@ -28,23 +31,37 @@ public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
         this.filename = name + ".jpg";
     }
 
+    public DownloadImageTask(ImageView bmImage, String name, View v) {
+        this.bmImage = bmImage;
+        this.name = name;
+        this.filename = name + ".jpg";
+        this.detailView = v;
+    }
+
     public static boolean imageExists(String name) {
         File file = new File(path, name + ".jpg");
-        Log.i("imageExists", path + name + ".jpg " + file.exists());
         return file.exists();
     }
 
-    public void loadFromLocal() {
+    public DownloadImageTask loadFromLocal() {
         File file = new File(path, filename);
         try {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inPreferredConfig = Bitmap.Config.ARGB_8888;
             Bitmap bitmap = BitmapFactory.decodeFile(file.toString(), options);
             bmImage.setImageBitmap(bitmap);
-            Log.i("loadedfromlocal", file.toString());
+            setMainColor(bitmap);
         }
         catch(Exception e){
             e.printStackTrace();
+        }
+        return this;
+    }
+
+    private void setMainColor(Bitmap bmp) {
+        if(detailView != null) {
+            int c = getAverageColor(bmp);
+            detailView.setBackgroundColor(c);
         }
     }
 
@@ -53,7 +70,7 @@ public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
         File dir = new File(path);
 
         if(!dir.exists()) {
-            Log.i("dirExists", path + dir.mkdirs());
+            Log.i("make dir", path + dir.mkdirs());
         }
         File file = new File(path, filename);
         try {
@@ -61,7 +78,6 @@ public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
             bmp.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
             outStream.flush();
             outStream.close();
-            Log.i("savetolocal", filename);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -83,10 +99,37 @@ public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
     protected void onPostExecute(Bitmap result) {
         Bitmap bmp = fastblur(result, 1, 3);
         bmImage.setImageBitmap(bmp);
+        MyAnimator.fadeIn(bmImage, 0);
+        setMainColor(bmp);
         if(!imageExists(name)) saveToLocal(bmp);
     }
 
-    public Bitmap fastblur(Bitmap sentBitmap, float scale, int radius) {
+    private int getAverageColor(Bitmap bitmap) {
+        final int width = bitmap.getWidth();
+        final int height = bitmap.getHeight();
+        int size = width * height;
+        int pixelColor;
+        int r, g, b;
+        r = g = b = 0;
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                pixelColor = bitmap.getPixel(x, y);
+                if (pixelColor == 0) {
+                    size--;
+                    continue;
+                }
+                r += Color.red(pixelColor);
+                g += Color.green(pixelColor);
+                b += Color.blue(pixelColor);
+            }
+        }
+        r /= size * 1.3;
+        g /= size * 1.3;
+        b /= size * 1.3;
+        return Color.rgb(r, g, b);
+    }
+
+    private Bitmap fastblur(Bitmap sentBitmap, float scale, int radius) {
 
         int width = Math.round(sentBitmap.getWidth() * scale);
         int height = Math.round(sentBitmap.getHeight() * scale);

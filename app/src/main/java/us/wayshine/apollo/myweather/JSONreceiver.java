@@ -42,10 +42,10 @@ public class JSONreceiver {
                     @Override
                     public void onResponse(String response) {
                         if(response.contains("Not found city")) {
-                            listener.onJSONreceive(id, type, response, option, false);
+                            listener.onJSONreceive(id, type, "404", option, false);
                         }
                         else
-                            listener.onJSONreceive(id, type, "404", option, false);
+                            listener.onJSONreceive(id, type, response, option, true);
                     }
                 },
                 new Response.ErrorListener() {

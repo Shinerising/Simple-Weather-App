@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
@@ -17,6 +16,7 @@ import android.widget.TextView;
 public class DetailActivity extends Activity {
 
     static public String EXTRA_DETAIL = "us.wayshine.apollo.myweather.detail_data";
+    private static String LOG_TAG = "DetailActivity";
     private DataObject detailData;
 
     private TextView label_maxtemp;
@@ -33,10 +33,11 @@ public class DetailActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
-        detailData = getIntent().getExtras().getParcelable(EXTRA_DETAIL);
+        detailData = new DataObject(getIntent().getExtras().getString(EXTRA_DETAIL, ""));
 
         jsonInfo = new JSONreceiver(this);
 
+        assert getActionBar() != null;
         ActionBar actionBar = getActionBar();
         actionBar.setHomeButtonEnabled(false);
         actionBar.setDisplayUseLogoEnabled(true);
@@ -45,17 +46,17 @@ public class DetailActivity extends Activity {
         actionBar.setDisplayShowCustomEnabled(true);
         actionBar.setDisplayShowTitleEnabled(false);
 
-        LayoutInflater inflator = LayoutInflater.from(this);
-        View v = inflator.inflate(R.layout.actionbar_custom, null);
+        View v = View.inflate(this, R.layout.actionbar_custom, null);
         ((TextView)v.findViewById(R.id.title)).setText(R.string.title_activity_detail);
-
         actionBar.setCustomView(v);
 
+        findViewById(R.id.detail).setBackgroundColor(0xff1976D2);
+
         if(DownloadImageTask.imageExists(detailData.getCity()))
-            new DownloadImageTask(((ImageView)findViewById(R.id.card_cover)), detailData.getCity())
+            new DownloadImageTask(((ImageView)findViewById(R.id.card_cover)), detailData.getCity(), findViewById(R.id.detail))
                     .loadFromLocal();
         else if(!detailData.getCoverImageUri().equals(""))
-            new DownloadImageTask((ImageView)findViewById(R.id.card_cover), detailData.getCity())
+            new DownloadImageTask((ImageView)findViewById(R.id.card_cover), detailData.getCity(), findViewById(R.id.detail))
                     .execute(detailData.getCoverImageUri());
         else
             requestCoverImage(detailData.getCity(), 0);
@@ -102,7 +103,7 @@ public class DetailActivity extends Activity {
         View arrowImage = findViewById(R.id.arrow);
         arrowImage.setRotation(detailData.getWindDeg());
 
-        jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/forecast/daily?id=" + detailData.getCityID() + "&APPID=" + getString(R.string.owm_api_key), "", 0, 0);
+        jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/forecast/daily?id=" + detailData.getCityID() + "&APPID=" + getString(R.string.owm_api_key), "", 0, MainActivity.TYPE_FORECAST);
 
         try {
             jsonInfo.startNewRequest();
@@ -121,14 +122,13 @@ public class DetailActivity extends Activity {
                         PhotoObject dat = new PhotoObject(data);
                         String url = dat.getURL();
                         try {
-                            new DownloadImageTask(((ImageView) findViewById(R.id.card_cover)), option)
+                            new DownloadImageTask(((ImageView) findViewById(R.id.card_cover)), option, findViewById(R.id.detail))
                                     .execute(url);
-                            MyAnimator.fadeIn(findViewById(R.id.search_cover), 0);
                         } catch (Exception e) {
-                            Log.e("", e.toString());
+                            Log.e(LOG_TAG, e.toString());
                         }
                     }
-                    else {
+                    else if(type == MainActivity.TYPE_FORECAST) {
                         forecastData = new ForecastDataObject(data);
                         ((TextView) findViewById(R.id.fc01)).setText(forecastData.getTempBoth(0));
                         ((TextView) findViewById(R.id.fc02)).setText(forecastData.getTempBoth(1));
@@ -182,4 +182,11 @@ public class DetailActivity extends Activity {
     protected void onResume() {
         super.onResume();
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Runtime.getRuntime().gc();
+    }
+
 }

@@ -17,7 +17,6 @@ import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.util.Pair;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.support.v7.widget.LinearLayoutManager;
@@ -38,6 +37,7 @@ public class MainActivity extends Activity
     public static final String PREFS_NAME = "SimpleWeatherData";
     public static final int TYPE_INFO = 0;
     public static final int TYPE_IMAGE = 1;
+    public static final int TYPE_FORECAST = 2;
     public static final int ID_SEARCH = -1;
     public static final int TOAST_TIMEOUT = 0;
     public static final int TOAST_SEARCH_TIMEOUT = 1;
@@ -57,6 +57,61 @@ public class MainActivity extends Activity
     private static String LOG_TAG = "MainActivity";
 
     private JSONreceiver jsonInfo;
+
+    private JSONreceiver.JSONreceiveListener JSONListener = new JSONreceiver.JSONreceiveListener() {
+        @Override
+        public void onJSONreceive(int id, int type, String data, String option, boolean succeed) {
+            if (succeed) {
+                if (id == ID_SEARCH && type == TYPE_INFO) {
+                    updateSearchCard(data);
+                } else if (id == ID_SEARCH && type == TYPE_IMAGE) {
+                    try {
+                        PhotoObject dat = new PhotoObject(data);
+                        String url = dat.getURL();
+                        if (!url.equals(""))
+                            new DownloadImageTask(((ImageView) findViewById(R.id.search_cover)), option)
+                                    .execute(url);
+                    } catch (Exception e) {
+                        Log.e(LOG_TAG, e.toString());
+                    }
+                } else if (type == TYPE_IMAGE) {
+                    PhotoObject dat = new PhotoObject(data);
+                    String url = dat.getURL();
+                    try {
+                        mAdapter.refreshItemCover(id, url);
+                    }
+                    catch(Exception e) {
+                        Log.e(LOG_TAG, e.toString());
+                    }
+                } else {
+                    DataObject dat = new DataObject(data);
+                    try {
+                        if (id > mAdapter.getItemCount())
+                            mAdapter.addItem(dat, mAdapter.getItemCount());
+                        else
+                            mAdapter.updateItem(dat, id);
+                        writeData(id, data);
+                    }
+                    catch(Exception e) {
+                        Log.e(LOG_TAG, e.toString());
+                    }
+                    mSwipeRefreshLayout.setRefreshing(false);
+                }
+            } else {
+                if (id == ID_SEARCH && type == TYPE_INFO) {
+                    findViewById(R.id.card_search).setVisibility(View.GONE);
+                    if (data.equals("404"))
+                        showToast(TOAST_SEARCH_NORESULT);
+                    else
+                        showToast(TOAST_SEARCH_TIMEOUT);
+                } else {
+                    showToast(TOAST_TIMEOUT);
+                    mSwipeRefreshLayout.setRefreshing(false);
+                }
+            }
+
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +148,7 @@ public class MainActivity extends Activity
 
         jsonInfo = new JSONreceiver(this);
 
+        assert getActionBar() != null;
         ActionBar actionBar = getActionBar();
         actionBar.setHomeButtonEnabled(false);
         actionBar.setDisplayUseLogoEnabled(true);
@@ -101,58 +157,8 @@ public class MainActivity extends Activity
         actionBar.setDisplayShowCustomEnabled(true);
         actionBar.setDisplayShowTitleEnabled(false);
 
-        LayoutInflater inflator = LayoutInflater.from(this);
-        View v = inflator.inflate(R.layout.actionbar_custom, null);
-
+        View v = View.inflate(this, R.layout.actionbar_custom, null);
         actionBar.setCustomView(v);
-
-        jsonInfo.setJSONreceiveListener(new JSONreceiver.JSONreceiveListener() {
-            @Override
-            public void onJSONreceive(int id, int type, String data, String option, boolean succeed) {
-                if (succeed) {
-                    Log.i(LOG_TAG, data);
-                    if (id == ID_SEARCH && type == TYPE_INFO) {
-                        updateSearchCard(data);
-                    } else if (id == ID_SEARCH && type == TYPE_IMAGE) {
-                        try {
-                            PhotoObject dat = new PhotoObject(data);
-                            String url = dat.getURL();
-                            if (!url.equals(""))
-                                new DownloadImageTask(((ImageView) findViewById(R.id.search_cover)), option)
-                                        .execute(url);
-                            MyAnimator.fadeIn(findViewById(R.id.search_cover), 0);
-                        } catch (Exception e) {
-                            Log.e("", e.toString());
-                        }
-                    } else if (type == TYPE_IMAGE) {
-                        PhotoObject dat = new PhotoObject(data);
-                        String url = dat.getURL();
-                        mAdapter.refreshItemCover(id, url);
-                    } else {
-                        DataObject dat = new DataObject(data);
-                        if (id > mAdapter.getItemCount())
-                            mAdapter.addItem(new DataObject(data), mAdapter.getItemCount());
-                        else
-                            mAdapter.updateItem(new DataObject(data), id);
-                        writeData(id, data);
-
-                        mSwipeRefreshLayout.setRefreshing(false);
-                    }
-                } else {
-                    if (id == ID_SEARCH && type == TYPE_INFO) {
-                        findViewById(R.id.card_search).setVisibility(View.GONE);
-                        if (data.equals("404"))
-                            showToast(TOAST_SEARCH_NORESULT);
-                        else
-                            showToast(TOAST_SEARCH_TIMEOUT);
-                    } else {
-                        showToast(TOAST_TIMEOUT);
-                        mSwipeRefreshLayout.setRefreshing(false);
-                    }
-                }
-
-            }
-        });
 
         findViewById(R.id.card_search).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -183,7 +189,7 @@ public class MainActivity extends Activity
         }
 
         showCards();
-
+        refreshJSON();
     }
 
     private void showCards() {
@@ -214,12 +220,15 @@ public class MainActivity extends Activity
 
     private boolean refreshJSON(){
 
+        if(mAdapter.getItemCount() == 0) {
+            mSwipeRefreshLayout.setRefreshing(false);
+            return false;
+        }
         try {
 
             for(int i = 0; i < mAdapter.getItemCount(); i++) {
-                jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/weather?q=" + mAdapter.getDataObject(i).getCity() + "&APPID=" + getString(R.string.owm_api_key), "", i, TYPE_INFO);
+                jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/weather?id=" + mAdapter.getDataObject(i).getCityID() + "&APPID=" + getString(R.string.owm_api_key), "", i, TYPE_INFO);
             }
-
             return true;
         }
         catch(Exception e){
@@ -228,10 +237,11 @@ public class MainActivity extends Activity
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void showDetail(View v, int id) {
         Intent intent = new Intent(this, DetailActivity.class);
 
-        intent.putExtra(DetailActivity.EXTRA_DETAIL, mAdapter.getDataObject(id));
+        intent.putExtra(DetailActivity.EXTRA_DETAIL, mAdapter.getDataObject(id).getJSONString());
 
         Pair<View, String> p1 = Pair.create(v.findViewById(R.id.card_cover), "cover");
         Pair<View, String> p2 = Pair.create(v.findViewById(R.id.card_image), "image");
@@ -427,10 +437,8 @@ public class MainActivity extends Activity
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(searchWord.equals(""))
-                    mSearchView.onActionViewCollapsed();
-                else
-                    mSearchView.setQuery("", false);
+                mSearchView.setQuery("", false);
+                mSearchView.onActionViewCollapsed();
             }
         });
         return true;
@@ -457,14 +465,13 @@ public class MainActivity extends Activity
         View card = findViewById(R.id.card_search);
         card.findViewById(R.id.card_info).setVisibility(View.GONE);
         card.findViewById(R.id.search_progress).setVisibility(View.VISIBLE);
+        ((ImageView)card.findViewById(R.id.search_cover)).setImageBitmap(null);
         ((TextView)card.findViewById(R.id.card_image)).setText(getString(R.string.wi_cloud_refresh));
         MyAnimator.fadeOut(findViewById(R.id.search_cover), 0);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -483,6 +490,7 @@ public class MainActivity extends Activity
         catch(Exception e){
             Log.e("SQLite Database Error", e.toString());
         }
+        jsonInfo.setJSONreceiveListener(null);
         writeAllData();
     }
 
@@ -495,5 +503,6 @@ public class MainActivity extends Activity
         catch(Exception e){
             Log.e("SQLite Database Error", e.toString());
         }
+        jsonInfo.setJSONreceiveListener(JSONListener);
     }
 }

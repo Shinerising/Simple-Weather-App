@@ -1,7 +1,5 @@
 package us.wayshine.apollo.myweather;
 
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -14,7 +12,7 @@ import java.util.Locale;
 /**
  * Created by Apollo on 9/26/15.
  */
-public class DataObject implements Parcelable {
+public class DataObject {
 
     private JSONObject jObject;
     private boolean existed = false;
@@ -30,6 +28,7 @@ public class DataObject implements Parcelable {
     private Integer wind_speed = 0, wind_deg = 0;
     private Integer sunrise, sunset, cTime;
     private Integer dayornight = 0;     //1:day -1:night 0 :default
+    private Boolean useCelcius = true;
     private String coverImageUri = "";
     private Locale locale;
 
@@ -41,7 +40,7 @@ public class DataObject implements Parcelable {
                 parseJSON();
                 existed = true;
             } catch (JSONException e) {
-                Log.e("JSON Parser", "Error parsing data " + weatherData);
+                Log.e("JSON Parser", e.toString());
             }
         }
     }
@@ -72,6 +71,11 @@ public class DataObject implements Parcelable {
             sunset = sys.optInt("sunset");
             locale = new Locale(sys.optString("country"));
 
+            Locale locale_default = Locale.getDefault();
+            if(locale_default.getCountry().matches("US|BS|BZ|KY|PW") &&
+                    locale_default.getLanguage().equals("en"))
+                useCelcius = false;
+
             lon = coord.optString("lon");
             lat = coord.optString("lat");
 
@@ -93,7 +97,7 @@ public class DataObject implements Parcelable {
                 lat = Math.abs(Math.round(Float.parseFloat(lat))) + "N";
         }
         catch(Exception e) {
-            Log.e("JSON Parser", "Error parsing data " + weatherData);
+            Log.e("JSON Parser", e.toString());
         }
     }
 
@@ -107,7 +111,12 @@ public class DataObject implements Parcelable {
 
     public Integer getCityID() {return cityID;}
 
-    public String getTemp() {return Integer.toString(Math.round(temp - 273.15f)) + "°";}
+    public String getTemp() {
+        if(useCelcius)
+            return Integer.toString(Math.round(temp - 273.15f)) + "°";
+        else
+            return Integer.toString(Math.round(temp * 1.8f - 459.67f)) + "°";
+    }
 
     public String getWeather() {return weather_main;}
 
@@ -115,9 +124,18 @@ public class DataObject implements Parcelable {
 
     public String getLat() {return lat;}
 
-    public Integer getTempMax() {return Math.round(temp_max - 273.15f);}
+    public Integer getTempMax() {
+        if (useCelcius)
+            return Math.round(temp_max - 273.15f);
+        else
+            return Math.round(temp_max * 1.8f - 459.67f);
+    }
 
-    public Integer getTempMin() {return Math.round(temp_min - 273.15f);}
+    public Integer getTempMin() {
+        if (useCelcius)
+            return Math.round(temp_max - 273.15f);
+        else
+            return Math.round(temp_min * 1.8f - 459.67f);}
 
     public Integer getPressure() {return pressure;}
 
@@ -128,11 +146,17 @@ public class DataObject implements Parcelable {
     public Integer getVisibility() {return visibility;}
 
     public String getTempMax(Float f) {
-        return Integer.toString(Math.round((temp_max - 273.15f) * f)) + "°";
+        if(useCelcius)
+            return Integer.toString(Math.round((temp_max - 273.15f) * f)) + "°";
+        else
+            return Integer.toString(Math.round((temp_max * 1.8f - 459.67f) * f)) + "°";
     }
 
     public String getTempMin(Float f) {
-        return Integer.toString(Math.round((temp_min - 273.15f) * f)) + "°";
+        if(useCelcius)
+            return Integer.toString(Math.round((temp_min - 273.15f) * f)) + "°";
+        else
+            return Integer.toString(Math.round((temp_min * 1.8f - 459.67f) * f)) + "°";
     }
 
     public String getPressure(Float f) {
@@ -392,70 +416,4 @@ public class DataObject implements Parcelable {
         else return getImage(weatherID);
     }
 
-
-
-
-    private DataObject(Parcel in) {
-        this.existed = in.readByte() != 0;
-        this.city = in.readString();
-        this.cityID = in.readInt();
-        this.lon = in.readString();
-        this.lat = in.readString();
-        this.weatherID = in.readInt();
-        this.weather_main = in.readString();
-        this.temp = in.readFloat();
-        this.temp_max = in.readFloat();
-        this.temp_min = in.readFloat();
-        this.pressure = in.readInt();
-        this.humidity = in.readInt();
-        this.clouds = in.readInt();
-        this.visibility = in.readInt();
-        this.wind_speed = in.readInt();
-        this.wind_deg = in.readInt();
-        this.sunrise = in.readInt();
-        this.sunset = in.readInt();
-        this.cTime = in.readInt();
-        this.dayornight = in.readInt();
-        this.coverImageUri = in.readString();
-    }
-
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeByte((byte) (existed ? 1 : 0));
-        dest.writeString(city);
-        dest.writeInt(cityID);
-        dest.writeString(lon);
-        dest.writeString(lat);
-        dest.writeInt(weatherID);
-        dest.writeString(weather_main);
-        dest.writeFloat(temp);
-        dest.writeFloat(temp_max);
-        dest.writeFloat(temp_min);
-        dest.writeInt(pressure);
-        dest.writeInt(humidity);
-        dest.writeInt(clouds);
-        dest.writeInt(visibility);
-        dest.writeInt(wind_speed);
-        dest.writeInt(wind_deg);
-        dest.writeInt(sunrise);
-        dest.writeInt(sunset);
-        dest.writeInt(cTime);
-        dest.writeInt(dayornight);
-        dest.writeString(coverImageUri);
-    }
-
-    public int describeContents() {
-        return 0;
-    }
-
-    public static final Parcelable.Creator<DataObject> CREATOR
-            = new Parcelable.Creator<DataObject>() {
-
-        public DataObject createFromParcel(Parcel in) {
-            return new DataObject(in);
-        }
-
-        public DataObject[] newArray(int size) {
-            return new DataObject[size];
-        }
-    };
 }

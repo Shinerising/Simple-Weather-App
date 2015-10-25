@@ -23,7 +23,7 @@ public class ForecastDataObject {
                 jObject = new JSONObject(forecastData);
                 parseJSON();
             } catch (Exception e) {
-                Log.e("JSON Parser", "Error parsing data " + e.toString());
+                Log.e("JSON Parser", e.toString());
             }
         }
     }
@@ -39,7 +39,7 @@ public class ForecastDataObject {
             }
         }
         catch(Exception e) {
-            Log.e("JSON Parser", "Error parsing data " + e.toString());
+            Log.e("JSON Parser", e.toString());
         }
     }
 
