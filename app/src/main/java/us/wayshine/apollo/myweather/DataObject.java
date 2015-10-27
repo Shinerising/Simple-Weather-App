@@ -133,7 +133,7 @@ public class DataObject {
 
     public Integer getTempMin() {
         if (useCelcius)
-            return Math.round(temp_max - 273.15f);
+            return Math.round(temp_min - 273.15f);
         else
             return Math.round(temp_min * 1.8f - 459.67f);}
 
