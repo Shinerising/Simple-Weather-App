@@ -1,0 +1,24 @@
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/primary"
+    android:id="@+id/page">
+
+    <us.wayshine.apollo.myweather.MyTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:id="@+id/info"
+        android:textSize="25sp"
+        android:layout_marginTop="60dp"
+        android:layout_gravity="top|center_horizontal"
+        android:shadowColor="#333333AA"
+        android:shadowDx="0"
+        android:shadowDy="2"
+        android:shadowRadius="5"
+        android:textColor="@color/primary_text"
+        android:maxLines="2"
+        android:minLines="1" />
+
+</FrameLayout>

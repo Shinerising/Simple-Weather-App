@@ -25,4 +25,10 @@
         <item name="android:windowSharedElementExitTransition">@android:transition/move</item>
 
     </style>
+
+    <style name="FullscreenTheme" parent="android:Theme.Holo.NoActionBar.Fullscreen">
+        <item name="android:windowActionBarOverlay">@null</item>
+        <item name="android:windowBackground">@null</item>
+    </style>
+
 </resources>

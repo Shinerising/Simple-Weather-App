@@ -6,4 +6,9 @@
     <string name="toast_timeout">Network Timeout</string>
     <string name="toast_noresult">No result</string>
 
+    <string name="info_0">Global weather in one screen</string>
+    <string name="info_1">Click card to see details</string>
+    <string name="info_2">Easily add new cities</string>
+    <string name="info_3">Drag and swap cards</string>
+
 </resources>

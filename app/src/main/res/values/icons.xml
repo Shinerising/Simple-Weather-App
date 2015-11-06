@@ -7,6 +7,9 @@
     <string name="icon_moon">&#xf186;</string>
     <string name="icon_eye">&#xf06e;</string>
     <string name="icon_plus">&#xf067;</string>
+    <string name="icon_back">&#xf137;</string>
+    <string name="icon_forward">&#xf138;</string>
+    <string name="icon_check">&#xf00c;</string>
 
     <string name="icon_sunrise">&#xf051;</string>
     <string name="icon_moonrise">&#xf0c9;</string>

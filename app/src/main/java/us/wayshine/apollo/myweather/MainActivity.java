@@ -16,12 +16,12 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.util.Pair;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.widget.helper.ItemTouchHelper;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.SearchView;
@@ -42,11 +42,10 @@ public class MainActivity extends Activity
     public static final int TOAST_TIMEOUT = 0;
     public static final int TOAST_SEARCH_TIMEOUT = 1;
     public static final int TOAST_SEARCH_NORESULT = 2;
-
+    private static String LOG_TAG = "MainActivity";
     private int dataCount = 0;
     private DataObject searchData;
     private String searchWord = "";
-
     private MyDatabaseHelper mDatabaseHelper;
     private RecyclerView mRecyclerView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -54,8 +53,6 @@ public class MainActivity extends Activity
     private RecyclerView.LayoutManager mLayoutManager;
     private SearchView mSearchView;
     private MenuItem mSearch;
-    private static String LOG_TAG = "MainActivity";
-
     private JSONreceiver jsonInfo;
 
     private JSONreceiver.JSONreceiveListener JSONListener = new JSONreceiver.JSONreceiveListener() {
@@ -79,8 +76,7 @@ public class MainActivity extends Activity
                     String url = dat.getURL();
                     try {
                         mAdapter.refreshItemCover(id, url);
-                    }
-                    catch(Exception e) {
+                    } catch (Exception e) {
                         Log.e(LOG_TAG, e.toString());
                     }
                 } else {
@@ -91,8 +87,7 @@ public class MainActivity extends Activity
                         else
                             mAdapter.updateItem(dat, id);
                         writeData(id, data);
-                    }
-                    catch(Exception e) {
+                    } catch (Exception e) {
                         Log.e(LOG_TAG, e.toString());
                     }
                     mSwipeRefreshLayout.setRefreshing(false);
@@ -109,18 +104,51 @@ public class MainActivity extends Activity
                     mSwipeRefreshLayout.setRefreshing(false);
                 }
             }
-
         }
     };
+
+    public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            while ((halfHeight / inSampleSize) > reqHeight
+                    && (halfWidth / inSampleSize) > reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
+    }
+
+    public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
+                                                         int reqWidth, int reqHeight) {
+
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(res, resId, options);
+
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeResource(res, resId, options);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         mDatabaseHelper = new MyDatabaseHelper(this);
 
-        mRecyclerView = (RecyclerView)findViewById(R.id.weather_cards);
+        mRecyclerView = (RecyclerView) findViewById(R.id.weather_cards);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -132,7 +160,7 @@ public class MainActivity extends Activity
 
         mRecyclerView.setAdapter(mAdapter);
 
-        if(android.os.Build.VERSION.SDK_INT > 20) {
+        if (android.os.Build.VERSION.SDK_INT > 20) {
             try {
                 Bitmap bmp = decodeSampledBitmapFromResource(getResources(), R.drawable.weather_nobackground, 128, 128);
                 this.setTaskDescription(new ActivityManager.TaskDescription(getString(R.string.app_name), bmp, 0xFF2196F3));
@@ -142,7 +170,7 @@ public class MainActivity extends Activity
             }
         }
 
-        mSwipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.swipe_refresh_layout);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setColorSchemeResources(R.color.red, R.color.blue, R.color.green, R.color.orange);
         mSwipeRefreshLayout.setOnRefreshListener(this);
 
@@ -183,55 +211,66 @@ public class MainActivity extends Activity
 
         try {
             mDatabaseHelper.createDataBase();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             Log.e("SQLite Database Error", e.toString());
         }
 
         showCards();
-        refreshJSON();
+        //refreshJSON();
     }
 
     private void showCards() {
 
-        if(readSettings("city_count").equals("")) dataCount = 0;
-        else dataCount = Integer.parseInt(readSettings("city_count"));
-        DataObject dat;
-        for(int i = 0; i < dataCount; i++) {
-            dat = readData(i);
-            if(dat != null) {
-                mAdapter.addItem(dat, i);
+        if (readSettings("city_count").equals("")) {
+            dataCount = 0;
+            jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/weather?q="
+                    + Uri.encode("New York") + "&APPID=" + getString(R.string.owm_api_key), "New York", 0, TYPE_INFO);
+            jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/weather?q="
+                    + Uri.encode("Beijing") + "&APPID=" + getString(R.string.owm_api_key), "Beijing", 1, TYPE_INFO);
+            jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/weather?q="
+                    + Uri.encode("Tokyo") + "&APPID=" + getString(R.string.owm_api_key), "Tokyo", 2, TYPE_INFO);
+        }
+        else {
+            dataCount = Integer.parseInt(readSettings("city_count"));
+            DataObject dat;
+            for (int i = 0; i < dataCount; i++) {
+                dat = readData(i);
+                if (dat != null) {
+                    mAdapter.addItem(dat, i);
+                }
             }
         }
     }
 
     private void showToast(int type) {
-        switch(type) {
+        switch (type) {
             case TOAST_SEARCH_NORESULT:
-                Toast.makeText(this, getString(R.string.toast_noresult), Toast.LENGTH_SHORT).show();break;
+                Toast.makeText(this, getString(R.string.toast_noresult), Toast.LENGTH_SHORT).show();
+                break;
             case TOAST_SEARCH_TIMEOUT:
-                Toast.makeText(this, getString(R.string.toast_timeout), Toast.LENGTH_SHORT).show();break;
+                Toast.makeText(this, getString(R.string.toast_timeout), Toast.LENGTH_SHORT).show();
+                break;
             case TOAST_TIMEOUT:
-                Toast.makeText(this, getString(R.string.toast_timeout), Toast.LENGTH_SHORT).show();break;
+                Toast.makeText(this, getString(R.string.toast_timeout), Toast.LENGTH_SHORT).show();
+                break;
             default:
-                Toast.makeText(this, getString(R.string.toast_timeout), Toast.LENGTH_SHORT).show();break;
+                Toast.makeText(this, getString(R.string.toast_timeout), Toast.LENGTH_SHORT).show();
+                break;
         }
     }
 
-    private boolean refreshJSON(){
+    private boolean refreshJSON() {
 
-        if(mAdapter.getItemCount() == 0) {
+        if (mAdapter.getItemCount() == 0) {
             mSwipeRefreshLayout.setRefreshing(false);
             return false;
         }
         try {
-
-            for(int i = 0; i < mAdapter.getItemCount(); i++) {
+            for (int i = 0; i < mAdapter.getItemCount(); i++) {
                 jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/weather?id=" + mAdapter.getDataObject(i).getCityID() + "&APPID=" + getString(R.string.owm_api_key), "", i, TYPE_INFO);
             }
             return true;
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             Log.e("Fetch Data Error!", e.toString());
             return false;
         }
@@ -255,39 +294,6 @@ public class MainActivity extends Activity
         startActivity(intent, options.toBundle());
     }
 
-    public static int calculateInSampleSize(
-            BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if (height > reqHeight || width > reqWidth) {
-
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            while ((halfHeight / inSampleSize) > reqHeight
-                    && (halfWidth / inSampleSize) > reqWidth) {
-                inSampleSize *= 2;
-            }
-        }
-
-        return inSampleSize;
-    }
-
-    public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
-                                                         int reqWidth, int reqHeight) {
-
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeResource(res, resId, options);
-
-        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-
-        options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeResource(res, resId, options);
-    }
-
     private boolean writeData(int id, String data) {
 
         SharedPreferences data_file = getSharedPreferences(PREFS_NAME, 0);
@@ -306,7 +312,7 @@ public class MainActivity extends Activity
         dataCount = mAdapter.getItemCount();
         editor.putString("city_count", Integer.toString(dataCount));
 
-        for(int i = 0; i < dataCount; i++) {
+        for (int i = 0; i < dataCount; i++) {
             editor.putString("data_" + i, mAdapter.getDataObject(i).getJSONString());
         }
 
@@ -319,10 +325,9 @@ public class MainActivity extends Activity
         String str;
         SharedPreferences data_file = getSharedPreferences(PREFS_NAME, 0);
         str = data_file.getString("data_" + id, "");
-        if(!str.equals("")) {
+        if (!str.equals("")) {
             return new DataObject(str);
-        }
-        else {
+        } else {
             return null;
         }
     }
@@ -340,7 +345,7 @@ public class MainActivity extends Activity
     }
 
     @Override
-    public void onRefresh(){
+    public void onRefresh() {
         mSwipeRefreshLayout.setRefreshing(true);
         refreshJSON();
     }
@@ -433,7 +438,7 @@ public class MainActivity extends Activity
         });
         int searchCloseButtonId = mSearchView.getContext().getResources()
                 .getIdentifier("android:id/search_close_btn", null, null);
-        ImageView closeButton = (ImageView)mSearchView.findViewById(searchCloseButtonId);
+        ImageView closeButton = (ImageView) mSearchView.findViewById(searchCloseButtonId);
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -447,13 +452,14 @@ public class MainActivity extends Activity
     private void updateSearchCard(String data) {
         searchData = new DataObject(data);
         View card = findViewById(R.id.card_search);
-        ((TextView)card.findViewById(R.id.card_city)).setText(searchData.getCity());
-        ((TextView)card.findViewById(R.id.card_temper)).setText(searchData.getTemp());
-        ((TextView)card.findViewById(R.id.card_weather)).setText(searchData.getWeather());
-        ((TextView)card.findViewById(R.id.card_image)).setText(searchData.getAlterImage());
+        ((TextView) card.findViewById(R.id.card_city)).setText(searchData.getCity());
+        ((TextView) card.findViewById(R.id.card_temper)).setText(searchData.getTemp());
+        ((TextView) card.findViewById(R.id.card_weather)).setText(searchData.getWeather());
+        ((TextView) card.findViewById(R.id.card_image)).setText(searchData.getAlterImage());
         card.findViewById(R.id.card_info).setVisibility(View.VISIBLE);
         card.findViewById(R.id.search_progress).setVisibility(View.INVISIBLE);
-        if(!DownloadImageTask.imageExists(searchData.getCity())) requestCoverImage(searchData.getCity(), ID_SEARCH);
+        if (!DownloadImageTask.imageExists(searchData.getCity()))
+            requestCoverImage(searchData.getCity(), ID_SEARCH);
         else {
             new DownloadImageTask(((ImageView) findViewById(R.id.search_cover)), searchData.getCity())
                     .loadFromLocal();
@@ -465,8 +471,8 @@ public class MainActivity extends Activity
         View card = findViewById(R.id.card_search);
         card.findViewById(R.id.card_info).setVisibility(View.GONE);
         card.findViewById(R.id.search_progress).setVisibility(View.VISIBLE);
-        ((ImageView)card.findViewById(R.id.search_cover)).setImageBitmap(null);
-        ((TextView)card.findViewById(R.id.card_image)).setText(getString(R.string.wi_cloud_refresh));
+        ((ImageView) card.findViewById(R.id.search_cover)).setImageBitmap(null);
+        ((TextView) card.findViewById(R.id.card_image)).setText(getString(R.string.wi_cloud_refresh));
         MyAnimator.fadeOut(findViewById(R.id.search_cover), 0);
     }
 
@@ -486,8 +492,7 @@ public class MainActivity extends Activity
         super.onPause();
         try {
             mDatabaseHelper.close();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             Log.e("SQLite Database Error", e.toString());
         }
         jsonInfo.setJSONreceiveListener(null);
@@ -499,8 +504,7 @@ public class MainActivity extends Activity
         super.onResume();
         try {
             mDatabaseHelper.openDataBase();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             Log.e("SQLite Database Error", e.toString());
         }
         jsonInfo.setJSONreceiveListener(JSONListener);

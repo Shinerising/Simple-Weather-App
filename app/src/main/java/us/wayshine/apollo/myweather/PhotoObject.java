@@ -30,13 +30,12 @@ public class PhotoObject {
 
         try {
             int count = jObject.optInt("result_count");
-            if(count > 0) {
+            if (count > 0) {
                 JSONArray images = jObject.optJSONArray("images");
                 JSONArray sizes = images.optJSONObject(0).optJSONArray("display_sizes");
                 url = sizes.optJSONObject(0).optString("uri");
             }
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             Log.e("JSON Parser", e.toString());
         }
     }

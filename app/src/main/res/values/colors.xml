@@ -12,6 +12,8 @@
     <color name="accent">#FFFFFF</color>
     <color name="text">#212121</color>
     <color name="primary_text">#FFFFFF</color>
+    <color name="opacity_text">#AAFFFFFF</color>
+    <color name="opacity_text2">#AADDDDDD</color>
     <color name="secondary_text">#727272</color>
     <color name="icons">#FFFFFF</color>
     <color name="divider">#B6B6B6</color>

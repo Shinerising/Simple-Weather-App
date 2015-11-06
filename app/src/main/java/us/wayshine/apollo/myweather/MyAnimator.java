@@ -6,7 +6,6 @@ import android.animation.ObjectAnimator;
 import android.graphics.Path;
 import android.view.View;
 import android.view.ViewAnimationUtils;
-import android.view.animation.Animation;
 
 /**
  * Created by Apollo on 9/29/15.
@@ -17,7 +16,8 @@ public class MyAnimator {
     static public void fadeIn(View v, int delay) {
         ObjectAnimator mAnimator;
         v.setVisibility(View.VISIBLE);
-        mAnimator = ObjectAnimator.ofFloat(v, "alpha", v.getAlpha(), 1);
+        v.setAlpha(0);
+        mAnimator = ObjectAnimator.ofFloat(v, "alpha", 0, 1);
         mAnimator.setDuration(ANIMATION_DURATION);
         mAnimator.setStartDelay(delay);
         mAnimator.start();
@@ -25,13 +25,14 @@ public class MyAnimator {
 
     static public void fadeOut(final View v, int delay) {
         ObjectAnimator mAnimator;
-        mAnimator = ObjectAnimator.ofFloat(v, "alpha", v.getAlpha(), 0);
+        mAnimator = ObjectAnimator.ofFloat(v, "alpha", 1, 0);
         mAnimator.setDuration(ANIMATION_DURATION);
         mAnimator.setStartDelay(delay);
         mAnimator.start();
         mAnimator.addListener(new Animator.AnimatorListener() {
             @Override
-            public void onAnimationStart(Animator animation) { }
+            public void onAnimationStart(Animator animation) {
+            }
 
             @Override
             public void onAnimationEnd(Animator animation) {
@@ -39,10 +40,12 @@ public class MyAnimator {
             }
 
             @Override
-            public void onAnimationCancel(Animator animation) { }
+            public void onAnimationCancel(Animator animation) {
+            }
 
             @Override
-            public void onAnimationRepeat(Animator animation) { }
+            public void onAnimationRepeat(Animator animation) {
+            }
         });
     }
 
@@ -54,6 +57,22 @@ public class MyAnimator {
         v.setAlpha(0);
         mAnimator1 = ObjectAnimator.ofFloat(v, "alpha", 0, 1);
         mAnimator2 = ObjectAnimator.ofFloat(v, View.SCALE_X, View.SCALE_Y, path);
+        mAnimator1.setDuration(ANIMATION_DURATION);
+        mAnimator2.setDuration(ANIMATION_DURATION);
+        mAnimator1.setStartDelay(delay);
+        mAnimator2.setStartDelay(delay);
+        mAnimator1.start();
+        mAnimator2.start();
+    }
+
+    static public void flowFadeIn(View v, int delay) {
+        ObjectAnimator mAnimator1, mAnimator2;
+        Path path = new Path();
+        path.moveTo(20, 6);
+        path.lineTo(0, 0);
+        v.setAlpha(0);
+        mAnimator1 = ObjectAnimator.ofFloat(v, "alpha", 0, 1);
+        mAnimator2 = ObjectAnimator.ofFloat(v, View.TRANSLATION_Y, View.TRANSLATION_Z, path);
         mAnimator1.setDuration(ANIMATION_DURATION);
         mAnimator2.setDuration(ANIMATION_DURATION);
         mAnimator1.setStartDelay(delay);
@@ -76,6 +95,36 @@ public class MyAnimator {
         mAnimator2.setStartDelay(delay);
         mAnimator1.start();
         mAnimator2.start();
+    }
+
+    static public void inflate(View v, int delay) {
+        ObjectAnimator mAnimator1;
+        Path path = new Path();
+        path.moveTo(v.getScaleX(), v.getScaleY());
+        path.lineTo(1.5f, 1.5f);
+        mAnimator1 = ObjectAnimator.ofFloat(v, View.SCALE_X, View.SCALE_Y, path);
+        mAnimator1.setDuration(ANIMATION_DURATION);
+        mAnimator1.setStartDelay(delay);
+        mAnimator1.start();
+    }
+
+    static public void deflate(View v, int delay) {
+        ObjectAnimator mAnimator1;
+        Path path = new Path();
+        path.moveTo(v.getScaleX(), v.getScaleY());
+        path.lineTo(1, 1);
+        mAnimator1 = ObjectAnimator.ofFloat(v, View.SCALE_X, View.SCALE_Y, path);
+        mAnimator1.setDuration(ANIMATION_DURATION);
+        mAnimator1.setStartDelay(delay);
+        mAnimator1.start();
+    }
+
+    static public void rotate(View v, float angel, int delay) {
+        ObjectAnimator mAnimator1;
+        mAnimator1 = ObjectAnimator.ofFloat(v, View.ROTATION, v.getRotation(), angel);
+        mAnimator1.setDuration(ANIMATION_DURATION);
+        mAnimator1.setStartDelay(delay);
+        mAnimator1.start();
     }
 
     static public void flowIn(View v, int delay) {
