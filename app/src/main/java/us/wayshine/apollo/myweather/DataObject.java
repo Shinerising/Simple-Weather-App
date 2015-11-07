@@ -28,7 +28,7 @@ public class DataObject {
     private Integer wind_speed = 0, wind_deg = 0;
     private Integer sunrise, sunset, cTime;
     private Integer dayornight = 0;     //1:day -1:night 0 :default
-    private Boolean useCelcius = true;
+    static public Boolean useCelcius = true;
     private String coverImageUri = "";
     private Locale locale;
 
@@ -43,6 +43,12 @@ public class DataObject {
                 Log.e("JSON Parser", e.toString());
             }
         }
+
+        Locale locale_default = Locale.getDefault();
+
+        if(locale_default.getCountry().matches("US|BS|BZ|KY|PW") &&
+                locale_default.getLanguage().equals("en"))
+            useCelcius = false;
     }
 
     private void parseJSON() {
@@ -70,11 +76,6 @@ public class DataObject {
             sunrise = sys.optInt("sunrise");
             sunset = sys.optInt("sunset");
             locale = new Locale(sys.optString("country"));
-
-            Locale locale_default = Locale.getDefault();
-            if(locale_default.getCountry().matches("US|BS|BZ|KY|PW") &&
-                    locale_default.getLanguage().equals("en"))
-                useCelcius = false;
 
             lon = coord.optString("lon");
             lat = coord.optString("lat");

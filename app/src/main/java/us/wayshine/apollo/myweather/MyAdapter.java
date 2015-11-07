@@ -6,7 +6,6 @@ package us.wayshine.apollo.myweather;
 import android.content.Context;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,7 +43,6 @@ public class MyAdapter extends RecyclerView
             image_weather = (TextView) itemView.findViewById(R.id.card_image);
             image_cover = (ImageView) itemView.findViewById(R.id.card_cover);
 
-            Log.i(LOG_TAG, "Adding Listener");
             itemView.setOnClickListener(this);
         }
 

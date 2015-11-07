@@ -12,6 +12,7 @@ import android.view.ViewAnimationUtils;
  */
 public class MyAnimator {
     final static int ANIMATION_DURATION = 300;
+    final static int ANIMATION_DURATION_LONG = 500;
 
     static public void fadeIn(View v, int delay) {
         ObjectAnimator mAnimator;
@@ -68,13 +69,13 @@ public class MyAnimator {
     static public void flowFadeIn(View v, int delay) {
         ObjectAnimator mAnimator1, mAnimator2;
         Path path = new Path();
-        path.moveTo(20, 6);
+        path.moveTo(20, 10);
         path.lineTo(0, 0);
         v.setAlpha(0);
         mAnimator1 = ObjectAnimator.ofFloat(v, "alpha", 0, 1);
         mAnimator2 = ObjectAnimator.ofFloat(v, View.TRANSLATION_Y, View.TRANSLATION_Z, path);
-        mAnimator1.setDuration(ANIMATION_DURATION);
-        mAnimator2.setDuration(ANIMATION_DURATION);
+        mAnimator1.setDuration(ANIMATION_DURATION_LONG);
+        mAnimator2.setDuration(ANIMATION_DURATION_LONG);
         mAnimator1.setStartDelay(delay);
         mAnimator2.setStartDelay(delay);
         mAnimator1.start();

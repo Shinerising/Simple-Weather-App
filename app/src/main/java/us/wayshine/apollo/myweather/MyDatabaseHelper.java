@@ -70,25 +70,30 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
 
     public void copyDataBase() throws IOException{
 
-        File dir = new File(DB_DIR);
+        try {
+            File dir = new File(DB_DIR);
 
-        if(!dir.exists()) {
-            Log.i("dirExists", "" + dir.mkdirs());
+            if (!dir.exists()) {
+                Log.i("dirExists", "" + dir.mkdirs());
+            }
+
+            InputStream myInput = mContext.getAssets().open(DB_NAME);
+            OutputStream myOutput = new FileOutputStream(DB_PATH);
+
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer)) > 0) {
+                myOutput.write(buffer, 0, length);
+            }
+
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
         }
+        catch(Exception e){
+            Log.e("SQLite Database", e.toString());
 
-        InputStream myInput = mContext.getAssets().open(DB_NAME);
-        OutputStream myOutput = new FileOutputStream(DB_PATH);
-
-        byte[] buffer = new byte[1024];
-        int length;
-        while ((length = myInput.read(buffer)) > 0){
-            myOutput.write(buffer, 0, length);
         }
-
-        myOutput.flush();
-        myOutput.close();
-        myInput.close();
-
     }
 
     public void openDataBase() throws SQLException {
@@ -97,29 +102,6 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
 
     }
 
-    public boolean isOpened() {
-        return !(myDataBase == null);
-    }
-
-    public String[] getCityList(String text) {
-        String query = "SELECT * FROM cities WHERE city LIKE '" + text + "%' ORDER BY city LIMIT 5";
-        Cursor c = myDataBase.rawQuery(query, null);
-        if(c.getCount() <= 0) {
-            c.close();
-            return null;
-        }
-        else {
-            int cityCount = c.getCount();
-            String[] cities = new String[cityCount];
-            c.moveToFirst();
-            for(int i = 0; i < cityCount - 1; i++) {
-                cities[i] = c.getString(2);
-                c.moveToNext();
-            }
-            c.close();
-            return cities;
-        }
-    }
 
     public Cursor getCityListCursor(String text) {
         try {

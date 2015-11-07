@@ -36,6 +36,8 @@ public class ForecastDataObject {
                 Log.i("JSON Parser", weather[i] + "");
                 temp_max[i] = (float)list.optJSONObject(i).optJSONObject("temp").optDouble("max");
                 temp_min[i] = (float)list.optJSONObject(i).optJSONObject("temp").optDouble("min");
+
+
             }
         }
         catch(Exception e) {
@@ -44,16 +46,26 @@ public class ForecastDataObject {
     }
 
     public String getTempMax(int id) {
-        return Integer.toString(Math.round((temp_max[id] - 273.15f))) + "°";
+        if(DataObject.useCelcius)
+            return Integer.toString(Math.round(temp_max[id] - 273.15f)) + "°";
+        else
+            return Integer.toString(Math.round(temp_max[id] * 1.8f - 459.67f)) + "°";
     }
 
     public String getTempMin(int id) {
-        return Integer.toString(Math.round((temp_min[id] - 273.15f))) + "°";
+        if(DataObject.useCelcius)
+            return Integer.toString(Math.round(temp_min[id] - 273.15f)) + "°";
+        else
+            return Integer.toString(Math.round(temp_min[id] * 1.8f - 459.67f)) + "°";
     }
 
     public String getTempBoth(int id) {
-        return Integer.toString(Math.round((temp_min[id] - 273.15f))) + "°~" +
-                Integer.toString(Math.round((temp_max[id] - 273.15f))) + "°";
+        if(DataObject.useCelcius)
+            return Integer.toString(Math.round(temp_min[id] - 273.15f)) + "°~" +
+                    Integer.toString(Math.round(temp_max[id] - 273.15f)) + "°";
+        else
+            return Integer.toString(Math.round(temp_min[id] * 1.8f - 459.67f)) + "°~" +
+                    Integer.toString(Math.round(temp_max[id] * 1.8f - 459.67f)) + "°";
     }
 
     public Integer getWeatherID(int id) {return weather[id];}

@@ -38,6 +38,7 @@ public class MainActivity extends Activity
     public static final int TYPE_INFO = 0;
     public static final int TYPE_IMAGE = 1;
     public static final int TYPE_FORECAST = 2;
+    public static final int TYPE_SERVICE = 3;
     public static final int ID_SEARCH = -1;
     public static final int TOAST_TIMEOUT = 0;
     public static final int TOAST_SEARCH_TIMEOUT = 1;
@@ -58,52 +59,52 @@ public class MainActivity extends Activity
     private JSONreceiver.JSONreceiveListener JSONListener = new JSONreceiver.JSONreceiveListener() {
         @Override
         public void onJSONreceive(int id, int type, String data, String option, boolean succeed) {
-            if (succeed) {
-                if (id == ID_SEARCH && type == TYPE_INFO) {
-                    updateSearchCard(data);
-                } else if (id == ID_SEARCH && type == TYPE_IMAGE) {
-                    try {
-                        PhotoObject dat = new PhotoObject(data);
-                        String url = dat.getURL();
-                        if (!url.equals(""))
-                            new DownloadImageTask(((ImageView) findViewById(R.id.search_cover)), option)
-                                    .execute(url);
-                    } catch (Exception e) {
-                        Log.e(LOG_TAG, e.toString());
-                    }
-                } else if (type == TYPE_IMAGE) {
+        if (succeed) {
+            if (id == ID_SEARCH && type == TYPE_INFO) {
+                updateSearchCard(data);
+            } else if (id == ID_SEARCH && type == TYPE_IMAGE) {
+                try {
                     PhotoObject dat = new PhotoObject(data);
                     String url = dat.getURL();
-                    try {
-                        mAdapter.refreshItemCover(id, url);
-                    } catch (Exception e) {
-                        Log.e(LOG_TAG, e.toString());
-                    }
-                } else {
-                    DataObject dat = new DataObject(data);
-                    try {
-                        if (id > mAdapter.getItemCount())
-                            mAdapter.addItem(dat, mAdapter.getItemCount());
-                        else
-                            mAdapter.updateItem(dat, id);
-                        writeData(id, data);
-                    } catch (Exception e) {
-                        Log.e(LOG_TAG, e.toString());
-                    }
-                    mSwipeRefreshLayout.setRefreshing(false);
+                    if (!url.equals(""))
+                        new DownloadImageTask(((ImageView) findViewById(R.id.search_cover)), option)
+                                .execute(url);
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, e.toString());
+                }
+            } else if (type == TYPE_IMAGE) {
+                PhotoObject dat = new PhotoObject(data);
+                String url = dat.getURL();
+                try {
+                    mAdapter.refreshItemCover(id, url);
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, e.toString());
                 }
             } else {
-                if (id == ID_SEARCH && type == TYPE_INFO) {
-                    findViewById(R.id.card_search).setVisibility(View.GONE);
-                    if (data.equals("404"))
-                        showToast(TOAST_SEARCH_NORESULT);
+                DataObject dat = new DataObject(data);
+                try {
+                    if (id > mAdapter.getItemCount())
+                        mAdapter.addItem(dat, mAdapter.getItemCount());
                     else
-                        showToast(TOAST_SEARCH_TIMEOUT);
-                } else {
-                    showToast(TOAST_TIMEOUT);
-                    mSwipeRefreshLayout.setRefreshing(false);
+                        mAdapter.updateItem(dat, id);
+                    writeData(id, data);
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, e.toString());
                 }
+                mSwipeRefreshLayout.setRefreshing(false);
             }
+        } else {
+            if (id == ID_SEARCH && type == TYPE_INFO) {
+                findViewById(R.id.card_search).setVisibility(View.GONE);
+                if (data.equals("404"))
+                    showToast(TOAST_SEARCH_NORESULT);
+                else
+                    showToast(TOAST_SEARCH_TIMEOUT);
+            } else {
+                showToast(TOAST_TIMEOUT);
+                mSwipeRefreshLayout.setRefreshing(false);
+            }
+        }
         }
     };
 
@@ -174,7 +175,8 @@ public class MainActivity extends Activity
         mSwipeRefreshLayout.setColorSchemeResources(R.color.red, R.color.blue, R.color.green, R.color.orange);
         mSwipeRefreshLayout.setOnRefreshListener(this);
 
-        jsonInfo = new JSONreceiver(this);
+        jsonInfo = new JSONreceiver(this.getBaseContext());
+        jsonInfo.setJSONreceiveListener(JSONListener);
 
         assert getActionBar() != null;
         ActionBar actionBar = getActionBar();
@@ -216,12 +218,13 @@ public class MainActivity extends Activity
         }
 
         showCards();
-        //refreshJSON();
+        refreshJSON();
+        startForecastService();
     }
 
     private void showCards() {
 
-        if (readSettings("city_count").equals("")) {
+        if (readSettings("city_count").equals("") ||readSettings("city_count").equals("0")) {
             dataCount = 0;
             jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/weather?q="
                     + Uri.encode("New York") + "&APPID=" + getString(R.string.owm_api_key), "New York", 0, TYPE_INFO);
@@ -239,6 +242,14 @@ public class MainActivity extends Activity
                     mAdapter.addItem(dat, i);
                 }
             }
+        }
+    }
+
+    private void startForecastService() {
+        if(mAdapter.getItemCount() > 0) {
+            Intent intent = new Intent(this, ForecastService.class);
+            intent.putExtra(ForecastService.EXTRA_DETAIL, Integer.toString(mAdapter.getDataObject(0).getCityID()));
+            startService(intent);
         }
     }
 
@@ -266,6 +277,7 @@ public class MainActivity extends Activity
             return false;
         }
         try {
+            mSwipeRefreshLayout.setRefreshing(true);
             for (int i = 0; i < mAdapter.getItemCount(); i++) {
                 jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/weather?id=" + mAdapter.getDataObject(i).getCityID() + "&APPID=" + getString(R.string.owm_api_key), "", i, TYPE_INFO);
             }
@@ -495,7 +507,6 @@ public class MainActivity extends Activity
         } catch (Exception e) {
             Log.e("SQLite Database Error", e.toString());
         }
-        jsonInfo.setJSONreceiveListener(null);
         writeAllData();
     }
 
@@ -507,6 +518,5 @@ public class MainActivity extends Activity
         } catch (Exception e) {
             Log.e("SQLite Database Error", e.toString());
         }
-        jsonInfo.setJSONreceiveListener(JSONListener);
     }
 }

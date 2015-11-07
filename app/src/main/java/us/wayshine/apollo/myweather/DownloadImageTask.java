@@ -97,7 +97,7 @@ public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
     }
 
     protected void onPostExecute(Bitmap result) {
-        Bitmap bmp = fastblur(result, 1, 3);
+        Bitmap bmp = fastblur(result, 1, 5);
         bmImage.setImageBitmap(bmp);
         MyAnimator.fadeIn(bmImage, 0);
         setMainColor(bmp);

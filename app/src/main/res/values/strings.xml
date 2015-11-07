@@ -3,8 +3,8 @@
     <string name="action_settings">Settings</string>
     <string name="app_name">Simple Weather</string>
     <string name="title_activity_detail">Weather Detail</string>
-    <string name="toast_timeout">Network Timeout</string>
-    <string name="toast_noresult">No result</string>
+    <string name="toast_timeout">Network Timeout!</string>
+    <string name="toast_noresult">No result!</string>
 
     <string name="info_0">Global weather in one screen</string>
     <string name="info_1">Click card to see details</string>

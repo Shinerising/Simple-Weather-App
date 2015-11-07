@@ -35,7 +35,7 @@ public class DetailActivity extends Activity {
         setContentView(R.layout.activity_detail);
         detailData = new DataObject(getIntent().getExtras().getString(EXTRA_DETAIL, ""));
 
-        jsonInfo = new JSONreceiver(this);
+        jsonInfo = new JSONreceiver(this.getBaseContext());
 
         assert getActionBar() != null;
         ActionBar actionBar = getActionBar();
