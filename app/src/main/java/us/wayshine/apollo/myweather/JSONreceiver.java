@@ -20,10 +20,14 @@ import java.util.Map;
  */
 
 public class JSONreceiver {
+    public static final int TYPE_INFO = 0;
+    public static final int TYPE_IMAGE = 1;
+    public static final int TYPE_FORECAST = 2;
+    public static final int TYPE_SERVICE = 3;
 
     private Context mContext;
     private RequestQueue queue;
-    private static JSONreceiveListener listener;
+    private JSONreceiveListener listener;
 
     public JSONreceiver(Context context) {
 
@@ -73,7 +77,7 @@ public class JSONreceiver {
     }
 
     public void setJSONreceiveListener(JSONreceiveListener listener) {
-        JSONreceiver.listener = listener;
+        this.listener = listener;
     }
 
     public interface JSONreceiveListener
