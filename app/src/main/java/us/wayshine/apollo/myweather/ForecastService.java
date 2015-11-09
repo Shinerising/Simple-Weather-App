@@ -38,6 +38,7 @@ public class ForecastService extends IntentService {
         long endTime = 30l * 24 * 3600 * 1000 + System.currentTimeMillis();
         jsonInfo = new JSONreceiver(this.getBaseContext());
         jsonInfo.setJSONreceiveListener(JSONListener);
+        jsonInfo.setNewRequest("http://api.openweathermap.org/data/2.5/weather?id=" + city_id + "&APPID=" + getString(R.string.owm_api_key), "", 0, 3);
         while (System.currentTimeMillis() < endTime) {
             synchronized (this) {
                 try {
