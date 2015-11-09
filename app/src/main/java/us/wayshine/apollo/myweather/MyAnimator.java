@@ -53,13 +53,13 @@ public class MyAnimator {
     static public void deflateFadeIn(View v, int delay) {
         ObjectAnimator mAnimator1, mAnimator2;
         Path path = new Path();
-        path.moveTo(1.2f, 1.2f);
+        path.moveTo(1.1f, 1.1f);
         path.lineTo(1, 1);
         v.setAlpha(0);
         mAnimator1 = ObjectAnimator.ofFloat(v, "alpha", 0, 1);
         mAnimator2 = ObjectAnimator.ofFloat(v, View.SCALE_X, View.SCALE_Y, path);
-        mAnimator1.setDuration(ANIMATION_DURATION);
-        mAnimator2.setDuration(ANIMATION_DURATION);
+        mAnimator1.setDuration(ANIMATION_DURATION_LONG);
+        mAnimator2.setDuration(ANIMATION_DURATION_LONG);
         mAnimator1.setStartDelay(delay);
         mAnimator2.setStartDelay(delay);
         mAnimator1.start();

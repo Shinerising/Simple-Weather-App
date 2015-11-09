@@ -85,7 +85,7 @@ public class MyAdapter extends RecyclerView
         else
             ((MainActivity)mContext).requestCoverImage(mDataset.get(position).getCity(), position);
 
-        MyAnimator.flowFadeIn(holder.card, 0);
+        MyAnimator.deflateFadeIn(holder.card, 0);
     }
 
     public void addItem(DataObject dataObj, int position) {

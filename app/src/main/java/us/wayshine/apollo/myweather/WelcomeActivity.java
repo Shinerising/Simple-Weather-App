@@ -169,7 +169,6 @@ public class WelcomeActivity extends FragmentActivity {
             return this;
         }
 
-
     }
 
     private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
